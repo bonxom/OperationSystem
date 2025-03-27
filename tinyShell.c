@@ -70,20 +70,67 @@ void introduction(){
     help();
 }
 
-void kil(int type, char *id){ //type 1: PID, type 0: name
+//use an array of struct to store the information of the process
+typedef struct {
+    int pid;
+    char name[256];
+    int status; // 0: running, 1: stopped
+} Process;
+Process processes[100]; // Array to store processes
+int processCount = 0; // Number of processes in the array
 
+void addProcess(int pid, const char *name, int status) {
+    processes[processCount].pid = pid;
+    strncpy(processes[processCount].name, name, sizeof(processes[processCount].name) - 1);
+    processes[processCount].status = status;
+    processCount++;
+}
+
+void list(){
+    if (processCount == 0) {
+        printf("No background processes found.\n");
+        return;
+    }
+    printf("Background processes:\n");
+    for (int i = 0; i < processCount; i++) {
+        printf("PID: %d, Name: %s, Status: %s\n", processes[i].pid, processes[i].name, processes[i].status == 0 ? "Running" : "Stopped");
+    }
+}
+
+void kil(int type, char *id){ //type 1: PID, type 0: name
+    if (type == 1) {
+        int pid = atoi(id);
+        for (int i = 0; i < processCount; i++) {
+            if (processes[i].pid == pid) {
+                for (int j = i; j < processCount - 1; j++) {
+                    processes[j] = processes[j + 1];
+                }
+                processCount--;
+                return;
+            }
+        }
+        printf("Process with PID %d not found.\n", pid);
+    } 
+    else {
+        for (int i = 0; i < processCount; i++) {
+            if (strcmp(processes[i].name, id) == 0) {
+                for (int j = i; j < processCount - 1; j++) {
+                    processes[j] = processes[j + 1];
+                }
+                processCount--;
+                return;
+            }
+        }
+        printf("Process with name %s not found.\n", id);
+    }
 }
 
 void stop(int type, char *id){
-
+    
 }
 
 void resume(int type, char *id){
 
-}
-
-void list(){
-    
 }
 
 void dir(){
@@ -130,7 +177,6 @@ int main() {
             }
         }
         else if (strcmp(s, "list") == 0) {
-            printf("List of background processes:\n");
             list();
         }
         else if (strcmp(s, "clear") == 0) system("clear");
