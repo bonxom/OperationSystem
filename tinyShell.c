@@ -126,7 +126,7 @@ void kil(int type, char *id){ //type 1: PID, type 0: name
 }
 
 void stop(int type, char *id){
-    
+
 }
 
 void resume(int type, char *id){
@@ -203,7 +203,6 @@ int main() {
                 else if (strcmp(str[0], "stop") == 0) stop(type, str[1]);
                 else printf("Invalid command, try again!\n");
             }
-
         }
     }
     return 0;
