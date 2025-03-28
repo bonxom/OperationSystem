@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <sched.h>
 #include <signal.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
+#include <stdlib.h>
 
 // ASCII Art for TinyShell
 const char *tinyShellArt[] = {
@@ -73,111 +76,117 @@ void introduction(){
 //use an array of struct to store the information of the process
 typedef struct {
     int pid;
+    char name[256];
     int status; // 0: running, 1: stopped
 } Process;
-#define MAX_PROCESSES 100 
-Process processes[MAX_PROCESSES]; // Array to store processes
+Process processes[100]; // Array to store processes
 int processCount = 0; // Number of processes in the array
 
-void addProcess(pid_t pid)) {
-    if (processCount < MAX_PROCESSES) {
-        processes[processCount].pid = pid;
-        processes[processCount].status = 1; // Đánh dấu là đang chạy
-        processCount++;
-        printf("Process %d added to the list.\n", pid);
-    } else {
-        printf("Process list is full, cannot track new processes.\n");
-    }
+void addProcess(int pid, const char *name, int status) {
+    processes[processCount].pid = pid;
+    strncpy(processes[processCount].name, name, sizeof(processes[processCount].name) - 1);
+    processes[processCount].status = status;
+    processCount++;
 }
 
 void list(){
-    printf("PID\tSTATUS\n");
+    if (processCount == 0) {
+        printf("No background processes found.\n");
+        return;
+    }
+    printf("Background processes:\n");
     for (int i = 0; i < processCount; i++) {
-        printf("%d\t%s\n", processes[i].pid, processes[i].status ? "Running" : "Stopped");
+        printf("PID: %d, Name: %s, Status: %s\n", processes[i].pid, processes[i].name, processes[i].status == 0 ? "Running" : "Stopped");
     }
 }
 
 void kil(int type, char *id){ //type 1: PID, type 0: name
-    if (type == 1) { // Kill by PID
-        pid_t pid = atoi(id);
-        if (kill(pid, SIGKILL) == 0) {
-            printf("Process %d killed successfully.\n", pid);
-        } else {
-            perror("Failed to kill process");
+    if (type == 1) {
+        int pid = atoi(id);
+        for (int i = 0; i < processCount; i++) {
+            if (processes[i].pid == pid) {
+                if (kill(pid, SIGTERM) == 0) {  // Send termination signal
+                    printf("Process %d terminated.\n", pid);
+                } else {
+                    perror("Failed to kill process");
+                    return;
+                }
+                // Remove the process from the array
+                for (int j = i; j < processCount - 1; j++) {
+                    processes[j] = processes[j + 1];
+                }
+                processCount--;
+                return;
+            }
         }
-    } else { // Kill by name
-        char command[256];
-        snprintf(command, sizeof(command), "pkill %s", id);
-        int status = system(command);
-        if (status == 0) {
-            printf("Process %s killed successfully.\n", id);
-        } else {
-            printf("Failed to kill process %s.\n", id);
+        printf("Process with PID %d not found.\n", pid);
+    } 
+    else {
+        for (int i = 0; i < processCount; i++) {
+            if (strcmp(processes[i].name, id) == 0) {
+                if (kill(processes[i].pid, SIGTERM) == 0) {  // Send termination signal
+                    printf("Process %s terminated.\n", processes[i].name);
+                } else {
+                    perror("Failed to kill process");
+                    return;
+                }
+                // Remove the process from the array
+                for (int j = i; j < processCount - 1; j++) {
+                    processes[j] = processes[j + 1];
+                }
+                processCount--;
+                return;
+            }
         }
+        printf("Process with name %s not found.\n", id);
     }
 }
 
 void stop(int type, char *id){
-    pid_t pid = (type == 1) ? atoi(arg) : -1;
-    if (pid > 0) {
-        for (int i = 0; i < processCount; i++) {
-            if (processes[i].pid == pid) {
-                kill(pid, SIGSTOP);
-                processes[i].status = 0;
-                printf("Process %d stopped.\n", pid);
-                return;
-            }
-        }
-        printf("Process not found.\n");
-    } else {
-        printf("Invalid PID.\n");
-    }
+
 }
 
 void resume(int type, char *id){
-    pid_t pid = (type == 1) ? atoi(arg) : -1;
-    if (pid > 0) {
-        for (int i = 0; i < processCount; i++) {
-            if (processes[i].pid == pid) {
-                kill(pid, SIGCONT);
-                processes[i].status = 1;
-                printf("Process %d resumed.\n", pid);
-                return;
-            }
-        }
-        printf("Process not found.\n");
-    } else {
-        printf("Invalid PID.\n");
-    }
+
 }
 
 void dir(){
     struct dirent *dir;
-    DIR *d = opendir("."); // Mở thư mục hiện tại (.)
-
+    DIR *d = opendir("."); // open current directory
+    
     if (d == NULL) {
-        perror("opendir"); // Hiển thị lỗi nếu không mở được
+        printf("Fail to open current folder"); // open current directory failed
+        return;
+    }
+    
+    while ((dir = readdir(d)) != NULL) {
+        printf("%s\n", dir->d_name); // print all files in current directory
+    }
+    
+    closedir(d); // close folder
+}
+
+void date(){
+}
+
+void time_() {
+    setenv("TZ", "Asia/Ho_Chi_Minh", 1); // Set Vietnam timezone
+    tzset(); // Apply the new timezone
+
+    time_t t = time(NULL);
+    if (t == (time_t)-1) {
+        perror("Failed to get the current time");
         return;
     }
 
-    while ((dir = readdir(d)) != NULL) {
-        printf("%s\n", dir->d_name); // In ra tên file/thư mục
+    struct tm tm_info;
+    if (localtime_r(&t, &tm_info) == NULL) {
+        perror("Failed to convert time to local time");
+        return;
     }
 
-    closedir(d); // Đóng thư mục
-}
-
-void time_(){
-    setenv("TZ", "Asia/Ho_Chi_Minh", 1); // Đặt múi giờ Việt Nam
-    tzset();  // Cập nhật múi giờ mới
-    
-    time_t t;
-    struct tm *tm_info;
     char buffer[20];
-
-    time(&t);
-    tm_info = localtime(&t);
-    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_info);
     printf("Current time: %s\n", buffer);
 }
 
@@ -205,42 +214,43 @@ int main() {
         else if (strcmp(s, "dir") == 0) dir();
         else if (strcmp(s, "date") == 0) date();
         else if (strcmp(s, "time") == 0) time_();
-        else if (strcmp(s, "child") == 0) {
+        else if (strcmp(s, "child") == 0) { //test
             pid_t pid = fork();
+            addProcess(pid, "child", 0);
             if (pid == 0) {
                 printf("Child process is running\n");
-                while (1);
-            } else if (pid > 0) {
-                addProcess(pid);
-            } else {
-                perror("Fork failed");
+            
+                continue;
             }
         }
         else if (strcmp(s, "list") == 0) {
-            printf("List of background processes:\n");
             list();
         }
         else if (strcmp(s, "clear") == 0) system("clear");
-        else{// Xử lý các lệnh có tham số (kill, stop, resume)
-            char *token = strtok(s_copy, " ");
-            char *args[3]; 
+        else{//kill, stop, resume
+            //input should split by space, example kill 1234, so we need to split kill and 1234
+            //then check if 1234 is a number or not, if it is a number, then it is a PID, otherwise, it is a name
+            char **str = malloc(4 * sizeof(char *));
             int i = 0;
-            while (token != NULL && i < 3) {
-                args[i++] = token;
-                token = strtok(NULL, " ");
+            str[i] = strtok(s, " ");
+            while (str[i] != NULL) {
+                i++;
+                if (i >= 4) break; // Prevent buffer overflow
+                str[i] = strtok(NULL, " ");
             }
-            args[i] = NULL;
 
-            if (i == 2) {
-                int type = isNumeric(args[1]); // Kiểm tra số
-                if (strcmp(args[0], "kill") == 0) kil(type, args[1]);
-                else if (strcmp(args[0], "resume") == 0) resume(type, args[1]);
-                else if (strcmp(args[0], "stop") == 0) stop(type, args[1]);
-                else printf("Invalid command, try again!\n");
-            } else {
+            if (i != 2) {
                 printf("Invalid command, try again!\n");
+                continue;
             }
-
+            if (str[0] != NULL && str[1] != NULL) {
+                int type = isNumeric(str[1]);
+                if (strcmp(str[0], "kill") == 0) kil(type, str[1]);
+                else if (strcmp(str[0], "resume") == 0) resume(type, str[1]);
+                else if (strcmp(str[0], "stop") == 0) stop(type, str[1]);
+                else printf("Invalid command, try again!\n");
+            }
+        }
     }
     return 0;
 }
