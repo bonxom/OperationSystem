@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <sched.h>
 #include <signal.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
+#include <stdlib.h>
 
 // ASCII Art for TinyShell
 const char *tinyShellArt[] = {
@@ -102,6 +105,13 @@ void kil(int type, char *id){ //type 1: PID, type 0: name
         int pid = atoi(id);
         for (int i = 0; i < processCount; i++) {
             if (processes[i].pid == pid) {
+                if (kill(pid, SIGTERM) == 0) {  // Send termination signal
+                    printf("Process %d terminated.\n", pid);
+                } else {
+                    perror("Failed to kill process");
+                    return;
+                }
+                // Remove the process from the array
                 for (int j = i; j < processCount - 1; j++) {
                     processes[j] = processes[j + 1];
                 }
@@ -114,6 +124,13 @@ void kil(int type, char *id){ //type 1: PID, type 0: name
     else {
         for (int i = 0; i < processCount; i++) {
             if (strcmp(processes[i].name, id) == 0) {
+                if (kill(processes[i].pid, SIGTERM) == 0) {  // Send termination signal
+                    printf("Process %s terminated.\n", processes[i].name);
+                } else {
+                    perror("Failed to kill process");
+                    return;
+                }
+                // Remove the process from the array
                 for (int j = i; j < processCount - 1; j++) {
                     processes[j] = processes[j + 1];
                 }
@@ -156,18 +173,44 @@ void resume(int type, char *id){
 }
 
 void dir(){
-     system("ls");
-
+    struct dirent *dir;
+    DIR *d = opendir("."); // open current directory
+    
+    if (d == NULL) {
+        printf("Fail to open current folder"); // open current directory failed
+        return;
+    }
+    
+    while ((dir = readdir(d)) != NULL) {
+        printf("%s\n", dir->d_name); // print all files in current directory
+    }
+    
+    closedir(d); // close folder
 }
 
 void date(){
-     system("date");
-
+    system("date");
 }
 
-void time_(){
-    system("date +%T");
+void time_() {
+    setenv("TZ", "Asia/Ho_Chi_Minh", 1); // Set Vietnam timezone
+    tzset(); // Apply the new timezone
 
+    time_t t = time(NULL);
+    if (t == (time_t)-1) {
+        perror("Failed to get the current time");
+        return;
+    }
+
+    struct tm tm_info;
+    if (localtime_r(&t, &tm_info) == NULL) {
+        perror("Failed to convert time to local time");
+        return;
+    }
+
+    char buffer[20];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_info);
+    printf("Current time: %s\n", buffer);
 }
 void openCalculator() {
     system("gnome-calculator &");
@@ -199,11 +242,13 @@ int main() {
         else if (strcmp(s, "date") == 0) date();
         else if (strcmp(s, "time") == 0) time_();
         else if (strcmp(s, "calc") == 0) openCalculator();
-        else if (strcmp(s, "child") == 0) {
+        else if (strcmp(s, "child") == 0) { //test
             pid_t pid = fork();
+            addProcess(pid, "child", 0);
             if (pid == 0) {
                 printf("Child process is running\n");
-                exit(0);
+            
+                continue;
             }
         }
         else if (strcmp(s, "list") == 0) {
