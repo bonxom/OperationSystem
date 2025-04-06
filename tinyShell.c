@@ -64,11 +64,10 @@ void introduction(){
     printAnimatedText();
     printf("\nWelcome to TinyShell!\n");
     printf("\nThis shell is programmed for Unix as a project for the Operating Systems course at HUST.\nTeam members:\n");
-    printf("\tHo Minh Dung 20235050\n");
-    printf("\tHo Minh Dung 20235050\n");
-    printf("\tHo Minh Dung 20235050\n");
-    printf("\tHo Minh Dung 20235050\n");
-    printf("\tHo Minh Dung 20235050\n");
+    printf("\tNguyen Quang Duc\n");
+    printf("\tLe Duc Chinh\n");
+    printf("\tHo Minh Dung \n");
+    printf("\tNguyen Ba Duc Anh\n");
     printf("\n_________________________________________________________________________________\n");
     help();
 }
@@ -212,9 +211,56 @@ void time_() {
     strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_info);
     printf("Current time: %s\n", buffer);
 }
-void openCalculator() {
-    system("gnome-calculator &");
+
+void openCalculator_fg() {
+    pid_t pid = fork();
+    if (pid == 0) {
+        // Child process
+        freopen("/dev/null", "w", stderr); // avoid waning message in the console
+        execlp("gnome-calculator", "gnome-calculator", NULL); //if success skip the next 2 lines
+        perror("execlp failed");
+        exit(EXIT_FAILURE);
+    } else if (pid > 0) {
+        // Parent process
+        printf("Calculator opened in foreground with PID %d\n", pid);
+        signal(SIGINT, SIG_IGN); // Ignore Ctrl+C in the parent process
+        waitpid(pid, NULL, 0); // Wait for the child process to finish
+        signal(SIGINT, SIG_DFL); // Restore default signal handler
+    } else {
+        perror("Fork failed");
+    }
     
+    //similar to the background process function, this can be done with system command
+    //system("gnome-calculator");
+}
+void openCalculator_bg() {
+    //in Linux, we can use fork and execlp to run a program in the background
+    //fork is used to create a new process, the new process will be a child of the current process
+    //execlp is used to execute a program, it will replace the current process (fork create a child as a copy of TinyShell) with the new process (calculator)
+    //the child process (calculator) will run the program, and the parent process (TinyShell) will continue to run
+    pid_t pid = fork();
+    //here both Shell and Calculator are running at the same time
+    //so both (pid == 0) and (pid > 0) will excecute (magic :)))
+    if (pid == 0) {
+        // Child process
+        freopen("/dev/null", "w", stderr); // avoid waning message in the console
+        //printf("child process: Calculator\n");
+        execlp("gnome-calculator", "gnome-calculator", NULL); //if success skip the next 2 lines
+        perror("execlp failed");
+        exit(EXIT_FAILURE);
+    } else if (pid > 0) {
+        // Parent process
+        addProcess(pid, "Calculator", 0);
+        printf("Calculator opened in background with PID %d\n", pid);
+    } else {
+        perror("Fork failed");
+    }
+
+
+    //however this can be easily done by call the system command (But I want to make it complicated)
+    //system("gnome-calculator &");
+    //addProcess(pid, "Calculator", 0);
+    //printf("Calculator opened in background with PID %d\n", pid);
 }
 
 
@@ -241,7 +287,10 @@ int main() {
         else if (strcmp(s, "dir") == 0) dir();
         else if (strcmp(s, "date") == 0) date();
         else if (strcmp(s, "time") == 0) time_();
-        else if (strcmp(s, "calc") == 0) openCalculator();
+        //list of program
+        else if (strcmp(s, "calc") == 0) openCalculator_fg();
+        else if (strcmp(s, "calc &") == 0) openCalculator_bg();
+        //
         else if (strcmp(s, "child") == 0) { //test
             pid_t pid = fork();
             addProcess(pid, "child", 0);
