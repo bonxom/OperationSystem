@@ -7,7 +7,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include <stdlib.h>
+#include <sys/wait.h> // Thêm để dùng waitpid()
+#include <readline/readline.h> // Thêm để dùng readline()
+#include <readline/history.h> // Thêm để hỗ trợ lịch sử lệnh
 
 // ASCII Art for TinyShell
 const char *tinyShellArt[] = {
@@ -50,11 +52,17 @@ void help(){
     printf("resume <PID>: Resume a stopped process with the given PID\n");
     printf("resume<name>: Resume a stopped process with the given name\n");
 
+    printf("fg <PID>    : Bring a background process to foreground by PID\n");
+    printf("fg <name>   : Bring a background process to foreground by name\n");
+    printf("calc        : Open calculator (add & to run in background)\n");
+    printf("timer <sec> : Run a timer for specified seconds\n");
+    printf("prog <cmd>  : Run a program (e.g., prog calc)\n");
     printf("dir         : List the contents of the current directory\n");
     printf("date        : Display the system date\n");
     printf("time        : Display the system time\n");
     printf("exit        : Exit my shell\n");
     printf("help        : Print this help\n");
+    printf("<cmd> [&]   : Run any command, add & to run in background\n");
     printf("\n");
 }
 
@@ -80,12 +88,18 @@ typedef struct {
 } Process;
 Process processes[100]; // Array to store processes
 int processCount = 0; // Number of processes in the array
+pid_t fg_pid = -1; // Thêm biến để theo dõi tiến trình foreground
 
 void addProcess(int pid, const char *name, int status) {
+    if (processCount >= 100) { // tránh tràn
+        printf("Process list is full, cannot track new processes.\n");
+        return;
+    }
     processes[processCount].pid = pid;
     strncpy(processes[processCount].name, name, sizeof(processes[processCount].name) - 1);
     processes[processCount].status = status;
     processCount++;
+    printf("Process %d (%s) added to background.\n", pid, name); // test
 }
 
 void list(){
@@ -171,6 +185,27 @@ void resume(int type, char *id){
 
 }
 
+void fg(int type, char *id) { // Hàm này đưa tiến trình bg lên fg.
+    int pid = (type == 1) ? atoi(id) : -1;
+    for (int i = 0; i < processCount; i++) {
+        if ((type == 1 && processes[i].pid == pid) || (type == 0 && strcmp(processes[i].name, id) == 0)) {
+            printf("Bringing process %d (%s) to foreground\n", processes[i].pid, processes[i].name);
+            kill(processes[i].pid, SIGCONT);
+            processes[i].status = 0;
+            fg_pid = processes[i].pid;
+            waitpid(fg_pid, NULL, 0);
+            fg_pid = -1;
+            // Xóa tiến trình khỏi danh sách sau khi hoàn thành
+            for (int j = i; j < processCount - 1; j++) {
+                processes[j] = processes[j + 1];
+            }
+            processCount--;
+            return;
+        }
+    }
+    printf("Process not found: %s\n", id);
+}
+
 void dir(){
     struct dirent *dir;
     DIR *d = opendir("."); // open current directory
@@ -212,57 +247,112 @@ void time_() {
     printf("Current time: %s\n", buffer);
 }
 
-void openCalculator_fg() {
+void execute_command(char *command, char *args[], int is_background) { // chạy lệnh fg hoặc bg thay vì chạy hardcore
     pid_t pid = fork();
     if (pid == 0) {
-        // Child process
-        freopen("/dev/null", "w", stderr); // avoid waning message in the console
-        execlp("gnome-calculator", "gnome-calculator", NULL); //if success skip the next 2 lines
-        perror("execlp failed");
-        exit(EXIT_FAILURE);
+        execvp(command, args);
+        printf("Invalid command: %s\n", command);
+        exit(1);
     } else if (pid > 0) {
-        // Parent process
-        printf("Calculator opened in foreground with PID %d\n", pid);
-        signal(SIGINT, SIG_IGN); // Ignore Ctrl+C in the parent process
-        waitpid(pid, NULL, 0); // Wait for the child process to finish
-        signal(SIGINT, SIG_DFL); // Restore default signal handler
+        if (!is_background) {
+            fg_pid = pid; // Lưu PID của tiến trình foreground
+            waitpid(pid, NULL, 0);
+            fg_pid = -1;
+        } else {
+            addProcess(pid, command, 0); // Thêm vào danh sách background
+        }
     } else {
         perror("Fork failed");
     }
-    
-    //similar to the background process function, this can be done with system command
-    //system("gnome-calculator");
 }
-void openCalculator_bg() {
+
+void openCalculator(int is_background) { // gộp thành 1 hàm và chạy qua đối số
+    pid_t pid = fork();
+    if (pid == 0) {
+        freopen("/dev/null", "w", stderr); // Tắt cảnh báo stderr
+        char *args[] = {"gnome-calculator", NULL};
+        execvp("gnome-calculator", args);
+        printf("Invalid command: gnome-calculator\n");
+        exit(1);
+    } else if (pid > 0) {
+        if (!is_background) {
+            fg_pid = pid;
+            waitpid(pid, NULL, 0);
+            fg_pid = -1;
+        } else {
+            addProcess(pid, "gnome-calculator", 0);
+        }
+    } else {
+        perror("Fork failed");
+    }
+}
+
+// void openCalculator_fg() {
+//     pid_t pid = fork();
+//     if (pid == 0) {
+//         // Child process
+//         freopen("/dev/null", "w", stderr); // avoid waning message in the console
+//         execlp("gnome-calculator", "gnome-calculator", NULL); //if success skip the next 2 lines
+//         perror("execlp failed");
+//         exit(EXIT_FAILURE);
+//     } else if (pid > 0) {
+//         // Parent process
+//         printf("Calculator opened in foreground with PID %d\n", pid);
+//         signal(SIGINT, SIG_IGN); // Ignore Ctrl+C in the parent process
+//         waitpid(pid, NULL, 0); // Wait for the child process to finish
+//         signal(SIGINT, SIG_DFL); // Restore default signal handler
+//     } else {
+//         perror("Fork failed");
+//     }
+    
+//     //similar to the background process function, this can be done with system command
+//     //system("gnome-calculator");
+// }
+// void openCalculator_bg() {
     //in Linux, we can use fork and execlp to run a program in the background
     //fork is used to create a new process, the new process will be a child of the current process
     //execlp is used to execute a program, it will replace the current process (fork create a child as a copy of TinyShell) with the new process (calculator)
     //the child process (calculator) will run the program, and the parent process (TinyShell) will continue to run
-    pid_t pid = fork();
+    //pid_t pid = fork();
     //here both Shell and Calculator are running at the same time
     //so both (pid == 0) and (pid > 0) will excecute (magic :)))
-    if (pid == 0) {
-        // Child process
-        freopen("/dev/null", "w", stderr); // avoid waning message in the console
-        //printf("child process: Calculator\n");
-        execlp("gnome-calculator", "gnome-calculator", NULL); //if success skip the next 2 lines
-        perror("execlp failed");
-        exit(EXIT_FAILURE);
-    } else if (pid > 0) {
-        // Parent process
-        addProcess(pid, "Calculator", 0);
-        printf("Calculator opened in background with PID %d\n", pid);
-    } else {
-        perror("Fork failed");
-    }
+    // if (pid == 0) {
+    //     // Child process
+    //     freopen("/dev/null", "w", stderr); // avoid waning message in the console
+    //     //printf("child process: Calculator\n");
+    //     execlp("gnome-calculator", "gnome-calculator", NULL); //if success skip the next 2 lines
+    //     perror("execlp failed");
+    //     exit(EXIT_FAILURE);
+    // } else if (pid > 0) {
+    //     // Parent process
+    //     addProcess(pid, "Calculator", 0);
+    //     printf("Calculator opened in background with PID %d\n", pid);
+    // } else {
+    //    perror("Fork failed");
+    //}
 
 
     //however this can be easily done by call the system command (But I want to make it complicated)
     //system("gnome-calculator &");
     //addProcess(pid, "Calculator", 0);
     //printf("Calculator opened in background with PID %d\n", pid);
-}
+//}
 
+void timer(int seconds) { // test hàm chạy đồng hồ hẹn giờ
+    pid_t pid = fork();
+    if (pid == 0) {
+        printf("Timer started for %d seconds\n", seconds);
+        sleep(seconds);
+        printf("Timer finished\n");
+        exit(0);
+    } else if (pid > 0) {
+        fg_pid = pid;
+        waitpid(pid, NULL, 0);
+        fg_pid = -1;
+    } else {
+        perror("Fork failed");
+    }
+}
 
 int isNumeric(char *str) {
     if (str == NULL || *str == '\0') return 0; // Check for NULL or empty string
@@ -273,16 +363,127 @@ int isNumeric(char *str) {
     return 1; // All characters are digits
 }
 
+void handle_sigint(int sig) { // (Ctrl+C): Hủy tiến trình foreground mà không thoát shell.
+    if (fg_pid > 0) {
+        kill(fg_pid, SIGKILL);
+        printf("\nProcess %d terminated\n", fg_pid);
+        fg_pid = -1;
+    }
+}
+
+void handle_sigtstp(int sig) { // (Ctrl+Z): Tạm dừng tiến trình foreground và đưa vào background.
+    if (fg_pid > 0) {
+        kill(fg_pid, SIGSTOP);
+        addProcess(fg_pid, "unknown", 1); // Trạng thái stopped
+        printf("\nProcess %d stopped and moved to background\n", fg_pid);
+        fg_pid = -1;
+    }
+}
+
+void handle_sigchld(int sig) { // Dọn dẹp tiến trình background khi kết thúc.
+    int status;
+    pid_t pid;
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+        for (int i = 0; i < processCount; i++) {
+            if (processes[i].pid == pid) {
+                printf("Process %d (%s) exited\n", pid, processes[i].name);
+                for (int j = i; j < processCount - 1; j++) {
+                    processes[j] = processes[j + 1];
+                }
+                processCount--;
+                break;
+            }
+        }
+    }
+}
+
 int main() {
+    signal(SIGINT, handle_sigint); // Bắt Ctrl+C
+    signal(SIGTSTP, handle_sigtstp); // Bắt Ctrl+Z
+    signal(SIGCHLD, handle_sigchld); // Xử lý tiến trình con kết thúc
     introduction();
 
     while (1){
-        printf("ShellHehe> ");
-        char s[1000];
-        fgets(s, 1000, stdin);
+        char *s = readline("ShellHehe> "); // Thay fgets bằng readline
+        if (!s) break; // Thoát nếu gặp EOF (Ctrl+D)
+        if (*s) add_history(s); // Lưu lệnh vào lịch sử
         s[strcspn(s, "\n")] = 0;
 
-        if (strcmp(s, "exit") == 0) break;
+        ////////// test sửa phần xử lý lệnh: 
+        char *args[100];
+        int i = 0;
+        char s_copy[1000];
+        strcpy(s_copy, s);
+        char *token = strtok(s_copy, " ");
+        while (token != NULL) {
+            args[i++] = token;
+            token = strtok(NULL, " ");
+        }
+        args[i] = NULL;
+    
+        int is_background = 0;
+        if (i > 0 && strcmp(args[i-1], "&") == 0) {
+            is_background = 1;
+            args[i-1] = NULL;
+            i--;
+        }
+    
+        if (i == 0) {
+            free(s);
+            continue;
+        }
+        if (strcmp(args[0], "exit") == 0) {
+            free(s);
+            break;
+        }
+        else if (strcmp(args[0], "help") == 0) help();
+        else if (strcmp(args[0], "dir") == 0) dir();
+        else if (strcmp(args[0], "date") == 0) date();
+        else if (strcmp(args[0], "time") == 0) time_();
+        else if (strcmp(args[0], "calc") == 0) openCalculator(is_background); // is_background = 0 là fg, = 1 và bg
+        else if (strcmp(args[0], "timer") == 0 && i >= 2) timer(atoi(args[1]));
+        else if (strcmp(args[0], "child") == 0) {
+            pid_t pid = fork();
+            if (pid == 0) {
+                printf("Child process is running\n");
+                sleep(5);
+                printf("Child process finished\n");
+                exit(0);
+            } else if (pid > 0) {
+                addProcess(pid, "child", 0);
+            } else {
+                perror("Fork failed");
+            }
+        }
+        else if (strcmp(args[0], "list") == 0) list();
+        else if (strcmp(args[0], "clear") == 0) system("clear");
+        else if (strcmp(args[0], "kill") == 0 && i >= 2) {
+            int type = isNumeric(args[1]);
+            kil(type, args[1]);
+        }
+        else if (strcmp(args[0], "stop") == 0 && i >= 2) {
+            int type = isNumeric(args[1]);
+            stop(type, args[1]);
+        }
+        else if (strcmp(args[0], "resume") == 0 && i >= 2) {
+            int type = isNumeric(args[1]);
+            resume(type, args[1]);
+        }
+        else if (strcmp(args[0], "fg") == 0 && i >= 2) {
+            int type = isNumeric(args[1]);
+            fg(type, args[1]);
+        }
+        else if (strcmp(args[0], "prog") == 0 && i >= 2) {
+            execute_command(args[1], &args[1], is_background);
+        }
+        else {
+            execute_command(args[0], args, is_background);
+        }
+        free(s); // Giải phóng bộ nhớ cho readline
+
+        ////////// end test phần xử lý lệnh 
+
+        /* if (strcmp(s, "exit") == 0) break;
         else if (strcmp(s, "help") == 0) help();
         else if (strcmp(s, "dir") == 0) dir();
         else if (strcmp(s, "date") == 0) date();
@@ -291,13 +492,17 @@ int main() {
         else if (strcmp(s, "calc") == 0) openCalculator_fg();
         else if (strcmp(s, "calc &") == 0) openCalculator_bg();
         //
-        else if (strcmp(s, "child") == 0) { //test
+        else if (strcmp(s, "child") == 0) { // test
             pid_t pid = fork();
-            addProcess(pid, "child", 0);
             if (pid == 0) {
                 printf("Child process is running\n");
-            
-                continue;
+                sleep(5); // Thêm sleep để check
+                printf("Child process finished\n");
+                exit(0); // Thoát tiến trình con, thay vì continue
+            } else if (pid > 0) {
+                addProcess(pid, "child", 0); // Chuyển addProcess vào nhánh cha
+            } else {
+                perror("Fork failed");
             }
         }
         else if (strcmp(s, "list") == 0) {
@@ -327,7 +532,7 @@ int main() {
                 else if (strcmp(str[0], "stop") == 0) stop(type, str[1]);
                 else printf("Invalid command, try again!\n");
             }
-        }
+        } */    
     }
     return 0;
 }
