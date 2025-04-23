@@ -266,13 +266,34 @@ void execute_command(char *command, char *args[], int is_background) { // chạy
     }
 }
 
-void openCalculator(int is_background) { // gộp thành 1 hàm và chạy qua đối số
+// void openCalculator(int is_background) { // gộp thành 1 hàm và chạy qua đối số
+//     pid_t pid = fork();
+//     if (pid == 0) {
+//         freopen("/dev/null", "w", stderr); // Tắt cảnh báo stderr
+//         char *args[] = {"gnome-calculator", NULL};
+//         execvp("gnome-calculator", args);
+//         printf("Invalid command: gnome-calculator\n");
+//         exit(1);
+//     } else if (pid > 0) {
+//         if (!is_background) {
+//             fg_pid = pid;
+//             waitpid(pid, NULL, 0);
+//             fg_pid = -1;
+//         } else {
+//             addProcess(pid, "gnome-calculator", 0);
+//         }
+//     } else {
+//         perror("Fork failed");
+//     }
+// }
+
+void openCalculator(int is_background) { // Test thay gnome-calculator bằng sleep 5 giây vì docker không có GUI
     pid_t pid = fork();
     if (pid == 0) {
-        freopen("/dev/null", "w", stderr); // Tắt cảnh báo stderr
-        char *args[] = {"gnome-calculator", NULL};
-        execvp("gnome-calculator", args);
-        printf("Invalid command: gnome-calculator\n");
+        freopen("/dev/null", "w", stderr);
+        char *args[] = {"sleep", "5", NULL}; // Thay gnome-calculator bằng sleep 5 giây
+        execvp("sleep", args);
+        printf("Invalid command: sleep\n");
         exit(1);
     } else if (pid > 0) {
         if (!is_background) {
@@ -280,7 +301,7 @@ void openCalculator(int is_background) { // gộp thành 1 hàm và chạy qua �
             waitpid(pid, NULL, 0);
             fg_pid = -1;
         } else {
-            addProcess(pid, "gnome-calculator", 0);
+            addProcess(pid, "sleep", 0);
         }
     } else {
         perror("Fork failed");
@@ -394,6 +415,8 @@ void handle_sigchld(int sig) { // Dọn dẹp tiến trình background khi kết
                 break;
             }
         }
+        rl_on_new_line(); // Báo cho readline rằng đã xuống dòng mới
+        rl_redisplay();   // Yêu cầu readline in lại prompt
     }
 }
 
