@@ -254,7 +254,9 @@ void execute_command(char *command, char *args[], int is_background) { // chạy
     } else if (pid > 0) {
         if (!is_background) {
             fg_pid = pid; // Lưu PID của tiến trình foreground
-            waitpid(pid, NULL, 0);
+            //waitpid(pid, NULL, 0);
+            int status = 0;
+            waitpid(pid, &status, WUNTRACED);
             fg_pid = -1;
         } else {
             addProcess(pid, command, 0); // Thêm vào danh sách background
@@ -326,7 +328,7 @@ void handle_sigtstp(int sig) { // (Ctrl+Z): Tạm dừng tiến trình foregroun
         fg_pid = -1;
         rl_reset_line_state(); // Đặt lại trạng thái dòng lệnh của readline
         rl_on_new_line();      // Báo cho readline rằng đã xuống dòng mới
-        rl_redisplay();        // Yêu cầu readline in lại prompt
+        //rl_redisplay();        // Yêu cầu readline in lại prompt
     }
 }
 
