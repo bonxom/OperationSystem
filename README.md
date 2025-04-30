@@ -1,18 +1,48 @@
 # OperationSystem
 PracticeOS
 
+## TinyShell
+A simple shell implementation for Unix as a project for the Operating Systems course at HUST.
+
+### Team Members
+- Nguyen Quang Duc
+- Le Duc Chinh
+- Ho Minh Dung
+- Nguyen Ba Duc Anh
+
+### Project Structure
 TinyShell/
 │
-├── main.c          // Chứa hàm main() và loop xử lý lệnh
-├── shell.h         // Chứa khai báo các hàm
-├── shell.c         // Chứa phần hiện thực (implementation) các hàm lệnh (help, dir, date, time, kill, stop, resume,...)
-├── process.h       // Khai báo struct Process và các hàm quản lý process
-├── process.c       // Cài đặt các hàm quản lý process (addProcess, list, kill, stop, resume)
-├── utils.h         // Các hàm tiện ích nhỏ (isNumeric, clearScreen, etc.)
-├── utils.c         // Cài đặt các hàm tiện ích
-└── Makefile        // Để biên dịch tất cả các file thành 1 file executable
+├── main.c          // Contains the main() function and the command processing loop
+├── shell.h         // Declares functions for shell interface (introduction, help)
+├── shell.c         // Implements shell interface functions (introduction, help)
+├── process.h       // Declares the Process struct and process management functions
+├── process.c       // Implements process management functions (addProcess, list, kill, stop, resume, fg, signal handlers)
+├── utils.h         // Declares utility functions (isNumeric, dir, date, time_, execute_command, etc.)
+├── utils.c         // Implements utility functions
+├── commands.h      // Declares command mapping table and command handling functions
+├── commands.c      // Implements command handling using a mapping table
+└── Makefile        // Automates the compilation of all files into an executable
 
 
-make
+### Features
+- **Basic Commands**: `help`, `dir`, `date`, `time`, `clear`, `exit`
+- **Process Management**: `child`, `list`, `kill <PID|name>`, `stop <PID|name>`, `resume <PID|name>`, `fg <PID|name>`
+- **Program Execution**: `calc`, `timer <sec>`, `prog <cmd>`, `execfile <path>` (supports background execution with `&`)
+- **Signal Handling**: Supports `Ctrl+C` (terminate foreground process), `Ctrl+Z` (stop foreground process and move to background)
+- **Command History**: Uses `readline` library for command input with history support
 
-./tinyShell
+### Build and Run
+1. **Compile the program**:
+   ```bash
+   make
+2. Run the shell:
+    ./tinyshell
+3. Clean up (optional): To remove object files and the executable, run:
+    make clean
+
+
+### Notes
+Ensure the readline library is installed on your system to support command history and input.
+On Ubuntu, install it with:
+    sudo apt-get install libreadline-dev
