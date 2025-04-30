@@ -42,7 +42,52 @@ TinyShell/
     make clean
 
 
+### Example Usage
+1. Display help:
+    help
+2. List directory contents:
+    dir
+3. Run a timer for 5 seconds:
+    timer 5
+4. Execute a file (e.g., a program to sum two numbers):
+    execfile ./sum_ab
+5. Run a command in the background:
+    calc &
+6. Stop a process:
+    stop 1234
+7. Bring a background process to foreground:
+    fg 1234
+
 ### Notes
 Ensure the readline library is installed on your system to support command history and input.
-On Ubuntu, install it with:
-    sudo apt-get install libreadline-dev
+    On Ubuntu, install it with:
+        sudo apt-get install libreadline-dev
+    The execfile command requires the target file to be executable. For example, to create a simple program sum_ab:
+    1. Create sum_ab.c: 
+#include <stdio.h>
+int main() {
+    int a, b;
+    printf("Enter two numbers (a b): ");
+    scanf("%d %d", &a, &b);
+    printf("Sum of %d and %d is: %d\n", a, b, a + b);
+    return 0;
+}
+    2. Compile and make it executable:
+gcc -o sum_ab sum_ab.c
+chmod +x sum_ab
+    3. Run in the shell:
+execfile ./sum_ab
+    The calc command has two implementations in the openCalculator function in utils.c:
+        Default (for machines without GUI): Uses sleep 5 to simulate the calculator.
+        For machines with GUI (e.g., Dũng's machine): Uses gnome-calculator. To enable this, open utils.c, find the openCalculator function, and:
+            1. Comment out the sleep lines:
+// char *args[] = {"sleep", "5", NULL};
+// execvp("sleep", args);
+// printf("Invalid command: sleep\n");
+            2. Uncomment the gnome-calculator lines:
+char *args[] = {"gnome-calculator", NULL};
+execvp("gnome-calculator", args);
+printf("Invalid command: gnome-calculator\n");
+
+### Known Issues
+Some commands (e.g., calc) use sleep for testing purposes by default due to the lack of a GUI in some environments. Follow the instructions in the "Notes" section to enable gnome-calculator on systems with GUI support.

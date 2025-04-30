@@ -59,13 +59,22 @@ void time_() {
     printf("Current time: %s\n", buffer);
 }
 
-void openCalculator(int is_background) { // Test thay gnome-calculator bằng sleep 5 giây vì docker không có GUI
+void openCalculator(int is_background) {
     pid_t pid = fork();
     if (pid == 0) {
         freopen("/dev/null", "w", stderr);
+
+        // Dùng để test trên máy không có GUI (mặc định)
         char *args[] = {"sleep", "5", NULL}; // Thay gnome-calculator bằng sleep 5 giây
         execvp("sleep", args);
         printf("Invalid command: sleep\n");
+
+        // Phần code này dành cho máy có GUI (như máy của Dũng)
+        // Bỏ comment các dòng dưới đây khi test trên máy có cài gnome-calculator
+        // char *args[] = {"gnome-calculator", NULL};
+        // execvp("gnome-calculator", args);
+        // printf("Invalid command: gnome-calculator\n");
+
         exit(1);
     } else if (pid > 0) {
         if (!is_background) {
@@ -74,7 +83,7 @@ void openCalculator(int is_background) { // Test thay gnome-calculator bằng sl
             waitpid(pid, &status, WUNTRACED);
             fg_pid = -1;
         } else {
-            addProcess(pid, "sleep", 0);
+            addProcess(pid, "calc", 0);
         }
     } else {
         perror("Fork failed");
