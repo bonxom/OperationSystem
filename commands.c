@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-// Các hàm xử lý lệnh
+//handler
 void handle_help(char **args, int arg_count, int is_background) {
     help();
 }
@@ -105,7 +105,7 @@ void handle_execfile(char **args, int arg_count, int is_background) {
     }
 }
 
-// Bảng ánh xạ lệnh
+// command mapping table
 CommandEntry command_table[] = {
     {"help", handle_help},
     {"dir", handle_dir},
@@ -160,8 +160,6 @@ void handleCommand(char *input) {
 
     // Nếu không tìm thấy trong bảng, chạy như lệnh hệ thống
     if (!found) {
-        strcpy(fg_command_name, args[0]);
-        execute_command(args[0], args, is_background);
-        fg_command_name[0] = '\0';
+        printf("Invalid command, try again!\n");
     }
 }
