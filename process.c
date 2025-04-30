@@ -28,8 +28,7 @@ void createChild(){
     }
 }
 
-void parseAndHandleProcessCommand(char *input)
-{
+void parseAndHandleProcessCommand(char *input){
     // kill, stop, resume
     // input should split by space, example kill 1234, so we need to split kill and 1234
     // then check if 1234 is a number or not, if it is a number, then it is a PID, otherwise, it is a name
@@ -53,6 +52,8 @@ void parseAndHandleProcessCommand(char *input)
         else if (strcmp(str[0], "stop") == 0) stop(type, str[1]);
         else printf("Invalid command, try again!\n");
     }
+    free(str); // Free the allocated memory
+    str = NULL; // Set to NULL to avoid dangling pointer
 }
 
 void list(){
@@ -66,7 +67,6 @@ void list(){
     }
 }
 
-// Các hàm khác cũng lấy từ code bạn ra (listProcesses, killProcess, stopProcess, resumeProcess,...)
 void kil(int type, char *id){ //type 1: PID, type 0: name
     if (type == 1) {
         int pid = atoi(id);
