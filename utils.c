@@ -85,6 +85,23 @@ void openCalculator(int is_background) {
     //either bg process:                system("gnome-calculator &");
 }
 
+void countdown(int seconds) {
+    for (int i = seconds; i >= 0; i--) {
+        system("clear"); // Linux terminal clear
+        printf("***********************************\n");
+        printf("*        Countdown Timer         *\n");
+        printf("***********************************\n");
+        printf("*          %2d seconds           *\n", i);
+        printf("***********************************\n");
+        sleep(1); // 1 second pause
+    }
+
+    system("clear");
+    printf("***********************************\n");
+    printf("*           Time's up!           *\n");
+    printf("***********************************\n");
+}
+
 //clock cooldown
 void countdown(int seconds) {
     for (int i = seconds; i >= 0; i--) {
@@ -106,6 +123,7 @@ void timer(int seconds) {
     pid_t pid = fork();
     if (pid == 0) {
         printf("Timer started for %d seconds\n", seconds);
+        sleep(seconds);
         countdown(seconds);
         printf("Timer finished\n");
         exit(0);

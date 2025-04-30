@@ -1,0 +1,6 @@
+services:
+  projecttinishell:
+    image: projecttinishell
+    build:
+      context: .
+      dockerfile: ./Dockerfile
