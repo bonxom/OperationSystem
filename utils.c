@@ -62,45 +62,60 @@ void time_() {
 void openCalculator(int is_background) {
     pid_t pid = fork();
     if (pid == 0) {
-        // Child process
-        freopen("/dev/null", "w", stderr); // avoid waning message in the console
-        execlp("gnome-calculator", "gnome-calculator", NULL); //if success skip the next 2 lines
-        perror("execlp failed");
-        exit(EXIT_FAILURE);
+        freopen("/dev/null", "w", stderr);
+
+        // Dùng để test trên máy không có GUI (mặc định)
+        char *args[] = {"sleep", "5", NULL}; // Thay gnome-calculator bằng sleep 5 giây
+        execvp("sleep", args);
+        printf("Invalid command: sleep\n");
+
+        // Phần code này dành cho máy có GUI (như máy của Dũng)
+        // Bỏ comment các dòng dưới đây khi test trên máy có cài gnome-calculator
+        // char *args[] = {"gnome-calculator", NULL};
+        // execvp("gnome-calculator", args);
+        // printf("Invalid command: gnome-calculator\n");
+
+        exit(1);
     } else if (pid > 0) {
         if (!is_background) {
-            // Parent process
-            printf("Calculator opened in foreground with PID %d\n", pid);
-            signal(SIGINT, SIG_IGN); // Ignore Ctrl+C in the parent process
-            waitpid(pid, NULL, 0); // Wait for the child process to finish
-            signal(SIGINT, SIG_DFL); // Restore default signal handler
+            fg_pid = pid;
+            int status = 0;
+            waitpid(pid, &status, WUNTRACED);
+            fg_pid = -1;
         } else {
             addProcess(pid, "Calculator", 0);
-            printf("Calculator opened in background with PID %d\n", pid);        }
+            printf("Calculator opened in background with PID %d\n", pid);
+            }
     } else {
         perror("Fork failed");
     }
+} 
 
-    //basically fg process can be call: system("gnome-calculator");
-    //either bg process:                system("gnome-calculator &");
-}
+// void openCalculator(int is_background) { // Code cua Dung
+//     pid_t pid = fork();
+//     if (pid == 0) {
+//         // Child process
+//         freopen("/dev/null", "w", stderr); // avoid waning message in the console
+//         execlp("gnome-calculator", "gnome-calculator", NULL); //if success skip the next 2 lines
+//         perror("execlp failed");
+//         exit(EXIT_FAILURE);
+//     } else if (pid > 0) {
+//         if (!is_background) {
+//             // Parent process
+//             printf("Calculator opened in foreground with PID %d\n", pid);
+//             signal(SIGINT, SIG_IGN); // Ignore Ctrl+C in the parent process
+//             waitpid(pid, NULL, 0); // Wait for the child process to finish
+//             signal(SIGINT, SIG_DFL); // Restore default signal handler
+//         } else {
+//             addProcess(pid, "Calculator", 0);
+//             printf("Calculator opened in background with PID %d\n", pid);        }
+//     } else {
+//         perror("Fork failed");
+//     }
 
-void countdown(int seconds) {
-    for (int i = seconds; i >= 0; i--) {
-        system("clear"); // Linux terminal clear
-        printf("***********************************\n");
-        printf("*        Countdown Timer         *\n");
-        printf("***********************************\n");
-        printf("*          %2d seconds           *\n", i);
-        printf("***********************************\n");
-        sleep(1); // 1 second pause
-    }
-
-    system("clear");
-    printf("***********************************\n");
-    printf("*           Time's up!           *\n");
-    printf("***********************************\n");
-}
+//     //basically fg process can be call: system("gnome-calculator");
+//     //either bg process:                system("gnome-calculator &");
+// }
 
 //clock cooldown
 void countdown(int seconds) {
