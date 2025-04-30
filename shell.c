@@ -1,26 +1,12 @@
+#include <unistd.h>
+#include <stdlib.h>
 #include "shell.h"
 #include "process.h"
 #include "utils.h"
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-
-void handleCommand(char *input) {
-    if (strcmp(input, "help") == 0) help();
-    else if (strcmp(input, "dir") == 0) dir();
-    else if (strcmp(input, "date") == 0) date();
-    else if (strcmp(input, "time") == 0) time_();
-    else if (strcmp(input, "calc") == 0) openCalculator_fg();
-    else if (strcmp(input, "calc &") == 0) openCalculator_bg();
-    else if (strcmp(input, "child") == 0) createChild();
-    else if (strcmp(input, "list") == 0) list();
-    else if (strcmp(input, "clear") == 0) system("clear");
-    else {
-        parseAndHandleProcessCommand(input);
-    }
-}
+#include <readline/readline.h>
+#include <readline/history.h>
 
 // ASCII Art for TinyShell
 const char *tinyShellArt[] = {
@@ -36,7 +22,6 @@ const char *tinyShellArt[] = {
     "|                              ██║                                                |",
     "|                              ╚═╝                                                |",
     "|_________________________________________________________________________________|",
-
 };
 
 void printAnimatedText() {
@@ -75,13 +60,19 @@ void help(){
     printf("stop <name> : Stop the process with the given name\n");
     //resume-> continue a process (which was stopped)
     printf("resume <PID>: Resume a stopped process with the given PID\n");
-    printf("resume<name>: Resume a stopped process with the given name\n");
+    printf("resume <name>: Resume a stopped process with the given name\n");
 
+    printf("fg <PID>    : Bring a background process to foreground by PID\n");
+    printf("fg <name>   : Bring a background process to foreground by name\n");
+    printf("calc        : Open calculator (add & to run in background)\n");
+    printf("timer <sec> : Run a timer for specified seconds\n");
+    printf("prog <cmd>  : Run a program (e.g., prog calc)\n");
     printf("dir         : List the contents of the current directory\n");
     printf("date        : Display the system date\n");
     printf("time        : Display the system time\n");
+    printf("execfile <path> : Execute a file (e.g., execfile ./sum_ab)\n");
     printf("exit        : Exit my shell\n");
     printf("help        : Print this help\n");
+    printf("<cmd> [&]   : Run any command, add & to run in background\n");
     printf("\n");
 }
-

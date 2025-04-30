@@ -11,14 +11,12 @@
 #include <signal.h>
 
 int isNumeric(char *str) {
-    if (str == NULL || *str == '\0') return 0;
+    if (str == NULL || *str == '\0') return 0; // Check for NULL or empty string
     for (int i = 0; str[i]; i++) {
-        if (!isdigit(str[i])) return 0;
+        if (!isdigit(str[i])) return 0; // If any character is not a digit, return false
     }
-    return 1;
+    return 1; // All characters are digits
 }
-
-// Các hàm dir, date, time_, openCalculator_fg, openCalculator_bg như bạn đã viết
 
 void dir(){
     struct dirent *dir;
@@ -61,53 +59,82 @@ void time_() {
     printf("Current time: %s\n", buffer);
 }
 
-void openCalculator_fg() {
+void openCalculator(int is_background) { // Test thay gnome-calculator bằng sleep 5 giây vì docker không có GUI
     pid_t pid = fork();
     if (pid == 0) {
-        // Child process
-        freopen("/dev/null", "w", stderr); // avoid waning message in the console
-        execlp("gnome-calculator", "gnome-calculator", NULL); //if success skip the next 2 lines
-        perror("execlp failed");
-        exit(EXIT_FAILURE);
+        freopen("/dev/null", "w", stderr);
+        char *args[] = {"sleep", "5", NULL}; // Thay gnome-calculator bằng sleep 5 giây
+        execvp("sleep", args);
+        printf("Invalid command: sleep\n");
+        exit(1);
     } else if (pid > 0) {
-        // Parent process
-        printf("Calculator opened in foreground with PID %d\n", pid);
-        signal(SIGINT, SIG_IGN); // Ignore Ctrl+C in the parent process
-        waitpid(pid, NULL, 0); // Wait for the child process to finish
-        signal(SIGINT, SIG_DFL); // Restore default signal handler
+        if (!is_background) {
+            fg_pid = pid;
+            int status = 0;
+            waitpid(pid, &status, WUNTRACED);
+            fg_pid = -1;
+        } else {
+            addProcess(pid, "sleep", 0);
+        }
     } else {
         perror("Fork failed");
     }
-    
-    //similar to the background process function, this can be done with system command
-    //system("gnome-calculator");
 }
-void openCalculator_bg() {
-    //in Linux, we can use fork and execlp to run a program in the background
-    //fork is used to create a new process, the new process will be a child of the current process
-    //execlp is used to execute a program, it will replace the current process (fork create a child as a copy of TinyShell) with the new process (calculator)
-    //the child process (calculator) will run the program, and the parent process (TinyShell) will continue to run
+
+void timer(int seconds) { // test hàm chạy đồng hồ hẹn giờ
     pid_t pid = fork();
-    //here both Shell and Calculator are running at the same time
-    //so both (pid == 0) and (pid > 0) will excecute (magic :)))
     if (pid == 0) {
-        // Child process
-        freopen("/dev/null", "w", stderr); // avoid waning message in the console
-        //printf("child process: Calculator\n");
-        execlp("gnome-calculator", "gnome-calculator", NULL); //if success skip the next 2 lines
-        perror("execlp failed");
-        exit(EXIT_FAILURE);
+        printf("Timer started for %d seconds\n", seconds);
+        sleep(seconds);
+        printf("Timer finished\n");
+        exit(0);
     } else if (pid > 0) {
-        // Parent process
-        addProcess(pid, "Calculator", 0);
-        printf("Calculator opened in background with PID %d\n", pid);
+        fg_pid = pid;
+        int status = 0;
+        waitpid(pid, &status, WUNTRACED);
+        fg_pid = -1;
     } else {
         perror("Fork failed");
     }
+}
 
+void execute_command(char *command, char *args[], int is_background) { // chạy lệnh fg hoặc bg thay vì chạy hardcore
+    pid_t pid = fork();
+    if (pid == 0) {
+        execvp(command, args);
+        printf("Invalid command: %s\n", command);
+        exit(1);
+    } else if (pid > 0) {
+        if (!is_background) {
+            fg_pid = pid; // Lưu PID của tiến trình foreground
+            int status = 0;
+            waitpid(pid, &status, WUNTRACED);
+            fg_pid = -1;
+        } else {
+            addProcess(pid, command, 0); // Thêm vào danh sách background
+        }
+    } else {
+        perror("Fork failed");
+    }
+}
 
-    //however this can be easily done by call the system command (But I want to make it complicated)
-    //system("gnome-calculator &");
-    //addProcess(pid, "Calculator", 0);
-    //printf("Calculator opened in background with PID %d\n", pid);
+void execute_file(char *path, int is_background) { // Thêm hàm thực thi file
+    pid_t pid = fork();
+    if (pid == 0) {
+        char *args[] = {path, NULL}; // Gọi file thực thi với đường dẫn
+        execvp(path, args);
+        printf("Failed to execute file: %s\n", path);
+        exit(1);
+    } else if (pid > 0) {
+        if (!is_background) {
+            fg_pid = pid;
+            int status = 0;
+            waitpid(pid, &status, WUNTRACED);
+            fg_pid = -1;
+        } else {
+            addProcess(pid, path, 0);
+        }
+    } else {
+        perror("Fork failed");
+    }
 }
