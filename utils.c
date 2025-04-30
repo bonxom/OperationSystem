@@ -1,0 +1,140 @@
+#include "utils.h"
+#include "process.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <time.h>
+#include <dirent.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <signal.h>
+
+int isNumeric(char *str) {
+    if (str == NULL || *str == '\0') return 0; // Check for NULL or empty string
+    for (int i = 0; str[i]; i++) {
+        if (!isdigit(str[i])) return 0; // If any character is not a digit, return false
+    }
+    return 1; // All characters are digits
+}
+
+void dir(){
+    struct dirent *dir;
+    DIR *d = opendir("."); // open current directory
+    
+    if (d == NULL) {
+        printf("Fail to open current folder"); // open current directory failed
+        return;
+    }
+    
+    while ((dir = readdir(d)) != NULL) {
+        printf("%s\n", dir->d_name); // print all files in current directory
+    }
+    
+    closedir(d); // close folder
+}
+
+void date(){
+    system("date");
+}
+
+void time_() {
+    setenv("TZ", "Asia/Ho_Chi_Minh", 1); // Set Vietnam timezone
+    tzset(); // Apply the new timezone
+
+    time_t t = time(NULL);
+    if (t == (time_t)-1) {
+        perror("Failed to get the current time");
+        return;
+    }
+
+    struct tm tm_info;
+    if (localtime_r(&t, &tm_info) == NULL) {
+        perror("Failed to convert time to local time");
+        return;
+    }
+
+    char buffer[20];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_info);
+    printf("Current time: %s\n", buffer);
+}
+
+void openCalculator(int is_background) { // Test thay gnome-calculator bằng sleep 5 giây vì docker không có GUI
+    pid_t pid = fork();
+    if (pid == 0) {
+        freopen("/dev/null", "w", stderr);
+        char *args[] = {"sleep", "5", NULL}; // Thay gnome-calculator bằng sleep 5 giây
+        execvp("sleep", args);
+        printf("Invalid command: sleep\n");
+        exit(1);
+    } else if (pid > 0) {
+        if (!is_background) {
+            fg_pid = pid;
+            int status = 0;
+            waitpid(pid, &status, WUNTRACED);
+            fg_pid = -1;
+        } else {
+            addProcess(pid, "sleep", 0);
+        }
+    } else {
+        perror("Fork failed");
+    }
+}
+
+void timer(int seconds) { // test hàm chạy đồng hồ hẹn giờ
+    pid_t pid = fork();
+    if (pid == 0) {
+        printf("Timer started for %d seconds\n", seconds);
+        sleep(seconds);
+        printf("Timer finished\n");
+        exit(0);
+    } else if (pid > 0) {
+        fg_pid = pid;
+        int status = 0;
+        waitpid(pid, &status, WUNTRACED);
+        fg_pid = -1;
+    } else {
+        perror("Fork failed");
+    }
+}
+
+void execute_command(char *command, char *args[], int is_background) { // chạy lệnh fg hoặc bg thay vì chạy hardcore
+    pid_t pid = fork();
+    if (pid == 0) {
+        execvp(command, args);
+        printf("Invalid command: %s\n", command);
+        exit(1);
+    } else if (pid > 0) {
+        if (!is_background) {
+            fg_pid = pid; // Lưu PID của tiến trình foreground
+            int status = 0;
+            waitpid(pid, &status, WUNTRACED);
+            fg_pid = -1;
+        } else {
+            addProcess(pid, command, 0); // Thêm vào danh sách background
+        }
+    } else {
+        perror("Fork failed");
+    }
+}
+
+void execute_file(char *path, int is_background) { // Thêm hàm thực thi file
+    pid_t pid = fork();
+    if (pid == 0) {
+        char *args[] = {path, NULL}; // Gọi file thực thi với đường dẫn
+        execvp(path, args);
+        printf("Failed to execute file: %s\n", path);
+        exit(1);
+    } else if (pid > 0) {
+        if (!is_background) {
+            fg_pid = pid;
+            int status = 0;
+            waitpid(pid, &status, WUNTRACED);
+            fg_pid = -1;
+        } else {
+            addProcess(pid, path, 0);
+        }
+    } else {
+        perror("Fork failed");
+    }
+}
