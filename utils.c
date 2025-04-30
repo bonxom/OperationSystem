@@ -64,16 +64,16 @@ void openCalculator(int is_background) {
     if (pid == 0) {
         freopen("/dev/null", "w", stderr);
 
-        // Dùng để test trên máy không có GUI (mặc định)
-        char *args[] = {"sleep", "5", NULL}; // Thay gnome-calculator bằng sleep 5 giây
-        execvp("sleep", args);
-        printf("Invalid command: sleep\n");
+        // // Dùng để test trên máy không có GUI (mặc định)
+        // char *args[] = {"sleep", "5", NULL}; // Thay gnome-calculator bằng sleep 5 giây
+        // execvp("sleep", args);
+        // printf("Invalid command: sleep\n");
 
         // Phần code này dành cho máy có GUI (như máy của Dũng)
         // Bỏ comment các dòng dưới đây khi test trên máy có cài gnome-calculator
-        // char *args[] = {"gnome-calculator", NULL};
-        // execvp("gnome-calculator", args);
-        // printf("Invalid command: gnome-calculator\n");
+        char *args[] = {"gnome-calculator", NULL};
+        execvp("gnome-calculator", args);
+        printf("Invalid command: gnome-calculator\n");
 
         exit(1);
     } else if (pid > 0) {

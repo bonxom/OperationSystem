@@ -14,7 +14,7 @@ int main() {
     introduction();
 
     while (1) {
-        char *s = readline("ShellHehe> "); // Thay fgets bằng readline
+        char *s = readline("\033[1;32mShellHehe>\033[0m "); // Thay fgets bằng readline
         if (!s) break; // Thoát nếu gặp EOF (Ctrl+D)
         if (*s) add_history(s); // Lưu lệnh vào lịch sử
         s[strcspn(s, "\n")] = 0;
@@ -25,7 +25,7 @@ int main() {
         }
 
         handleCommand(s);
-        free(s); // Giải phóng bộ nhớ cho readline
+        free(s); //free memory
     }
     return 0;
 }

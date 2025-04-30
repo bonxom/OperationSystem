@@ -9,11 +9,10 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-// Khai báo biến toàn cục
 Process processes[100]; // Array to store processes
 int processCount = 0; // Number of processes in the array
-pid_t fg_pid = -1; // Thêm biến để theo dõi tiến trình foreground
-char fg_command_name[256] = {0}; // Thêm biến để lưu tên lệnh foreground
+pid_t fg_pid = -1; // tracking foreground process
+char fg_command_name[256] = {0}; // foreground process name
 
 void addProcess(int pid, const char *name, int status) {
     if (processCount >= 100) { // tránh tràn
@@ -122,7 +121,7 @@ void resume(int type, char *id){
     printf("Process not found: %s\n", id);
 }
 
-void fg(int type, char *id) { // Hàm này đưa tiến trình bg lên fg.
+void fg(int type, char *id) { // move background process to foreground
     int pid = (type == 1) ? atoi(id) : -1;
     for (int i = 0; i < processCount; i++) {
         if ((type == 1 && processes[i].pid == pid) || (type == 0 && strcmp(processes[i].name, id) == 0)) {
@@ -130,9 +129,11 @@ void fg(int type, char *id) { // Hàm này đưa tiến trình bg lên fg.
             kill(processes[i].pid, SIGCONT);
             processes[i].status = 0;
             fg_pid = processes[i].pid;
-            waitpid(fg_pid, NULL, 0);
+            if (waitpid(fg_pid, NULL, 0) == -1) {
+                perror("waitpid failed");
+            }
             fg_pid = -1;
-            // Xóa tiến trình khỏi danh sách sau khi hoàn thành
+            // delete from bg processes array
             for (int j = i; j < processCount - 1; j++) {
                 processes[j] = processes[j + 1];
             }
@@ -143,7 +144,7 @@ void fg(int type, char *id) { // Hàm này đưa tiến trình bg lên fg.
     printf("Process not found: %s\n", id);
 }
 
-void handle_sigint(int sig) { // (Ctrl+C): Hủy tiến trình foreground mà không thoát shell.
+void handle_sigint(int sig) { // (Ctrl+C): kill foreground process
     if (fg_pid > 0) {
         kill(fg_pid, SIGKILL);
         printf("\nProcess %d terminated\n", fg_pid);
@@ -151,18 +152,18 @@ void handle_sigint(int sig) { // (Ctrl+C): Hủy tiến trình foreground mà kh
     }
 }
 
-void handle_sigtstp(int sig) { // (Ctrl+Z): Tạm dừng tiến trình foreground và chuyển vào background
+void handle_sigtstp(int sig) { // (Ctrl+Z): move foreground process to background
     if (fg_pid > 0) {
         kill(fg_pid, SIGSTOP);
-        addProcess(fg_pid, fg_command_name[0] ? fg_command_name : "unknown", 1); // Dùng fg_command_name
+        addProcess(fg_pid, fg_command_name[0] ? fg_command_name : "unknown", 1); 
         printf("\nProcess %d stopped and moved to background\n", fg_pid);
         fg_pid = -1;
-        rl_reset_line_state(); // Đặt lại trạng thái dòng lệnh của readline
-        rl_on_new_line();      // Báo cho readline rằng đã xuống dòng mới
+        rl_reset_line_state(); // reset readline's state
+        rl_on_new_line();      // notice to readline that start a new line
     }
 }
 
-void handle_sigchld(int sig) { // Dọn dẹp tiến trình background khi kết thúc.
+void handle_sigchld(int sig) { // clear background process
     int status;
     pid_t pid;
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
@@ -176,7 +177,7 @@ void handle_sigchld(int sig) { // Dọn dẹp tiến trình background khi kết
                 break;
             }
         }
-        rl_on_new_line(); // Báo cho readline rằng đã xuống dòng mới
-        rl_redisplay();   // Yêu cầu readline in lại prompt
+        rl_on_new_line(); // notice to readline that start a new line
+        rl_redisplay();   // reset readline's state
     }
 }

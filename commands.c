@@ -121,6 +121,7 @@ CommandEntry command_table[] = {
     {"resume", handle_resume},
     {"fg", handle_fg},
     {"prog", handle_prog},
+    {"mlem", introduction},
     {"execfile", handle_execfile}, // Thêm lệnh mới để thực thi file
     {NULL, NULL} // Kết thúc bảng
 };
