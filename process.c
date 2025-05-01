@@ -129,15 +129,27 @@ void fg(int type, char *id) { // move background process to foreground
             kill(processes[i].pid, SIGCONT);
             processes[i].status = 0;
             fg_pid = processes[i].pid;
-            if (waitpid(fg_pid, NULL, 0) == -1) {
-                perror("waitpid failed");
-            }
-            fg_pid = -1;
+            int status;
+            waitpid(pid, &status, WUNTRACED);
+         //   if (waitpid(fg_pid, NULL, 0) == -1) {
+          //      perror("waitpid failed");
+          //  }
+          //  fg_pid = -1;
             // delete from bg processes array
-            for (int j = i; j < processCount - 1; j++) {
-                processes[j] = processes[j + 1];
-            }
-            processCount--;
+         //   for (int j = i; j < processCount - 1; j++) {
+         //       processes[j] = processes[j + 1];
+         //   }
+         //   processCount--;
+            if (WIFSTOPPED(status)) {
+                //    printf("Process %d stopped again\n", pid);
+                    processes[i].status = 1;
+                } else {
+                    for (int j = i; j < processCount - 1; j++) {
+                        processes[j] = processes[j + 1];
+                    }
+                    processCount--;
+                }
+                fg_pid = -1;
             return;
         }
     }
