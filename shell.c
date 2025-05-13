@@ -76,6 +76,7 @@ void help(){
     printf("exit        : Exit my shell\n");
     printf("help        : Print this help\n");
     printf("<cmd> [&]   : Run any command, add & to run in background\n");
+    printf("shfile <path> : Execute a shell script file (example: shfile script.sh)\n");
     printf("mlem        : Wanna see our introduction again 👉👈? (just for fun)\n");
     printf("\n");
 }

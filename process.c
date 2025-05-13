@@ -1,5 +1,6 @@
 #include "process.h"
 #include "utils.h"
+#include "commands.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -154,6 +155,21 @@ void fg(int type, char *id) { // move background process to foreground
         }
     }
     printf("Process not found: %s\n", id);
+}
+
+void shfile(char *path){
+    //this function is used to execute a shell script file
+    FILE *file = fopen(path, "r");
+    if (file == NULL) {
+        perror("Failed to open file");
+        return;
+    }
+    char line[256];
+    while (fgets(line, sizeof(line), file) != NULL) {
+        line[strcspn(line, "\n")] = '\0';
+        handleCommand(line);
+    }
+    fclose(file);
 }
 
 void handle_sigint(int sig) { // (Ctrl+C): kill foreground process

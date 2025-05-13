@@ -157,7 +157,6 @@ void execute_command(char *command, char *args[], int is_background) { // chạy
     pid_t pid = fork();
     if (pid == 0) {
         execvp(command, args);
-        printf("Invalid command: %s\n", command);
         exit(1);
     } else if (pid > 0) {
         if (!is_background) {

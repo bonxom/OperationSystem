@@ -105,6 +105,11 @@ void handle_execfile(char **args, int arg_count, int is_background) {
     }
 }
 
+void handle_shfile(char **args, int arg_count, int is_background) {
+    //call shfile function
+    shfile(args[1]);
+}
+
 // command mapping table
 CommandEntry command_table[] = {
     {"help", handle_help},
@@ -123,6 +128,7 @@ CommandEntry command_table[] = {
     {"prog", handle_prog},
     {"mlem", introduction},
     {"execfile", handle_execfile}, // Thêm lệnh mới để thực thi file
+    {"shfile", handle_shfile}, // Thêm lệnh mới để thực thi file
     {NULL, NULL} // Kết thúc bảng
 };
 
@@ -149,7 +155,7 @@ void handleCommand(char *input) {
         return;
     }
 
-    // Duyệt bảng ánh xạ để tìm và thực thi lệnh
+    // mapping command to function
     int found = 0;
     for (int j = 0; command_table[j].name != NULL; j++) {
         if (strcmp(args[0], command_table[j].name) == 0) {
@@ -159,7 +165,7 @@ void handleCommand(char *input) {
         }
     }
 
-    // Nếu không tìm thấy trong bảng, chạy như lệnh hệ thống
+    // if not found in table, run as system command
     if (!found) {
         strcpy(fg_command_name, args[0]);
         execute_command(args[0], args, is_background);

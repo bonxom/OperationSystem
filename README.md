@@ -10,20 +10,8 @@ A simple shell implementation for Unix as a project for the Operating Systems co
 - Ho Minh Dung
 - Nguyen Ba Duc Anh
 
-# OperationSystem
-PracticeOS
-
-## TinyShell
-A simple shell implementation for Unix as a project for the Operating Systems course at HUST.
-
-### Team Members
-- Nguyen Quang Duc
-- Le Duc Chinh
-- Ho Minh Dung
-- Nguyen Ba Duc Anh
-
 ### Project Structure
-```text
+text
 TinyShell/
 │
 ├── main.c         // Main function and command processing loop
