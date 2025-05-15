@@ -169,6 +169,7 @@ void shfile(char *path){
         line[strcspn(line, "\n")] = '\0';
         handleCommand(line);
     }
+    printf("File %s executed\n", path);
     fclose(file);
 }
 

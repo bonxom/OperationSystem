@@ -106,8 +106,11 @@ void handle_execfile(char **args, int arg_count, int is_background) {
 }
 
 void handle_shfile(char **args, int arg_count, int is_background) {
-    //call shfile function
-    shfile(args[1]);
+    if (arg_count >= 2) {
+        shfile(args[1]);
+    } else {
+        printf("Usage: shfile <path>\n");
+    }
 }
 
 // command mapping table
