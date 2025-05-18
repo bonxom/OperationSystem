@@ -173,6 +173,16 @@ void shfile(char *path){
     fclose(file);
 }
 
+void change_dir(char *dir){
+    if (dir == NULL){//move to Home
+        dir = getenv("HOME");
+    }
+
+    if (chdir(dir) != 0){
+        perror("Change directory failed");
+    }
+}
+
 void handle_sigint(int sig) { // (Ctrl+C): kill foreground process
     if (fg_pid > 0) {
         kill(fg_pid, SIGKILL);

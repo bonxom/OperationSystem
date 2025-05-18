@@ -1,5 +1,6 @@
+clear
 calc &
-fg calc
+time
 date
 timer 5
 mlem

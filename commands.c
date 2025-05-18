@@ -113,6 +113,10 @@ void handle_shfile(char **args, int arg_count, int is_background) {
     }
 }
 
+void handle_cd(char **args, int arg_count, int is_background){
+    change_dir(args[1]);
+}
+
 // command mapping table
 CommandEntry command_table[] = {
     {"help", handle_help},
@@ -130,8 +134,9 @@ CommandEntry command_table[] = {
     {"fg", handle_fg},
     {"prog", handle_prog},
     {"mlem", introduction},
-    {"execfile", handle_execfile}, // Thêm lệnh mới để thực thi file
-    {"shfile", handle_shfile}, // Thêm lệnh mới để thực thi file
+    {"execfile", handle_execfile}, 
+    {"shfile", handle_shfile}, 
+    {"cd", handle_cd},
     {NULL, NULL} // Kết thúc bảng
 };
 
