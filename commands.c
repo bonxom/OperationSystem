@@ -178,6 +178,5 @@ void handleCommand(char *input) {
         strcpy(fg_command_name, args[0]);
         execute_command(args[0], args, is_background);
         fg_command_name[0] = '\0';
-        printf("Invalid command, try again!\n");
     }
 }

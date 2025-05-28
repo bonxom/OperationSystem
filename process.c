@@ -208,7 +208,25 @@ void handle_sigchld(int sig) { // clear background process
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         for (int i = 0; i < processCount; i++) {
             if (processes[i].pid == pid) {
+                // printf("\nProcess %d (%s) exited\n", pid, processes[i].name);
+                // for (int j = i; j < processCount - 1; j++) {
+                //     processes[j] = processes[j + 1];
+                // }
+                // processCount--;
+                // break;
+                // Clear current input line
+                rl_save_prompt();
+                rl_replace_line("", 0);
+                rl_redisplay();
+
+                // Print message
                 printf("\nProcess %d (%s) exited\n", pid, processes[i].name);
+
+                // Restore prompt
+                rl_restore_prompt();
+                rl_redisplay();
+
+                // Remove process from list
                 for (int j = i; j < processCount - 1; j++) {
                     processes[j] = processes[j + 1];
                 }
@@ -216,7 +234,7 @@ void handle_sigchld(int sig) { // clear background process
                 break;
             }
         }
-        rl_on_new_line(); // notice to readline that start a new line
-        rl_redisplay();   // reset readline's state
+        // rl_on_new_line(); // notice to readline that start a new line
+        // rl_redisplay();   // reset readline's state
     }
 }
