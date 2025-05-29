@@ -24,8 +24,13 @@ void handle_time(char **args, int arg_count, int is_background) {
 }
 
 void handle_calc(char **args, int arg_count, int is_background) {
-    strcpy(fg_command_name, "calc");
-    openCalculator(is_background);
+    //strcpy(fg_command_name, "calc");
+    // Kiểm tra xem có đang chạy trong môi trường đồ họa không
+    if (getenv("DISPLAY") == NULL) {
+        printf("Không thể mở máy tính: Không phát hiện môi trường đồ họa (DISPLAY).\n");
+    } else {
+        openCalculator(is_background);
+    }
     fg_command_name[0] = '\0';
 }
 

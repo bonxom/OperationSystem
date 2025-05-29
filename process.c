@@ -214,7 +214,10 @@ void handle_sigchld(int sig) { // clear background process
                 // }
                 // processCount--;
                 // break;
-                // Clear current input line
+            
+
+                //////
+                //Clear current input line
                 rl_save_prompt();
                 rl_replace_line("", 0);
                 rl_redisplay();
