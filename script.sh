@@ -1,6 +1,5 @@
 clear
-calc &
 time
 date
+calc 
 timer 5
-mlem
