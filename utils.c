@@ -79,6 +79,7 @@ void openCalculator(int is_background) {
     } else if (pid > 0) {
         if (!is_background) {
             fg_pid = pid;
+            strcpy(fg_command_name, "Calculator");
             int status = 0;
             waitpid(pid, &status, WUNTRACED);
             fg_pid = -1;

@@ -137,9 +137,7 @@ CommandEntry command_table[] = {
     {"stop", handle_stop},
     {"resume", handle_resume},
     {"fg", handle_fg},
-    {"prog", handle_prog},
     {"mlem", introduction},
-    {"execfile", handle_execfile}, 
     {"shfile", handle_shfile}, 
     {"cd", handle_cd},
     {NULL, NULL} // Kết thúc bảng
@@ -183,5 +181,6 @@ void handleCommand(char *input) {
         strcpy(fg_command_name, args[0]);
         execute_command(args[0], args, is_background);
         fg_command_name[0] = '\0';
+        printf("Invalid command, try again!\n");
     }
 }
