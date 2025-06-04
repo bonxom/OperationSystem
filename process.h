@@ -25,5 +25,7 @@ void handle_sigtstp(int sig);
 void handle_sigchld(int sig);
 void shfile(char *path);
 void change_dir(char *dir);
-
+void set_env(char *var, char *value);
+void append_env(char *var, char *value);
+void print_env();
 #endif

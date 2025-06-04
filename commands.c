@@ -122,6 +122,26 @@ void handle_cd(char **args, int arg_count, int is_background){
     change_dir(args[1]);
 }
 
+void handle_setenv(char **args, int arg_count, int is_background) {
+    if (arg_count >= 3) {
+        set_env(args[1], args[2]);
+    } else {
+        printf("Usage: setenv <variable> <value>\n");
+    }
+}
+
+void handle_appendenv(char **args, int arg_count, int is_background) {
+    if (arg_count >= 3) {
+        append_env(args[1], args[2]);
+    } else {
+        printf("Usage: appendenv <variable> <value>\n");
+    }
+}
+
+void handle_printfenv(char **args, int arg_count, int is_background) {
+    print_env();
+}
+
 // command mapping table
 CommandEntry command_table[] = {
     {"help", handle_help},
@@ -135,11 +155,15 @@ CommandEntry command_table[] = {
     {"clear", handle_clear},
     {"kill", handle_kill},
     {"stop", handle_stop},
+    {"exec", handle_execfile},
     {"resume", handle_resume},
     {"fg", handle_fg},
     {"mlem", introduction},
     {"shfile", handle_shfile}, 
     {"cd", handle_cd},
+    {"setenv", handle_setenv},
+    {"appendenv", handle_appendenv},
+    {"printenv", handle_printfenv},
     {NULL, NULL} // Kết thúc bảng
 };
 

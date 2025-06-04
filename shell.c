@@ -65,18 +65,19 @@ void help(){
     printf("resume <name>: Resume a stopped process with the given name\n");
 
     printf("fg <PID>    : Bring a background process to foreground by PID\n");
-    printf("fg <name>   : Bring a background process to foreground by name\n");
     printf("calc        : Open calculator (add & to run in background)\n");
     printf("timer <sec> : Run a timer for specified seconds\n");
-    printf("prog <cmd>  : Run a program (e.g., prog calc)\n");
     printf("dir         : List the contents of the current directory\n");
     printf("date        : Display the system date\n");
     printf("time        : Display the system time\n");
-    printf("execfile <path> : Execute a file (e.g., execfile ./sum_ab)\n");
     printf("exit        : Exit my shell\n");
     printf("help        : Print this help\n");
     printf("<cmd> [&]   : Run any command, add & to run in background\n");
     printf("shfile <path> : Execute a shell script file (example: shfile script.sh)\n");
+    printf("cd <dir>    : Change directory to <dir>\n");
+    printf("setenv <var> <value> : Set an environment variable\n");
+    printf("appendenv <var> <value> : Append a value to an environment variable\n");
+    printf("printenv    : Print all environment variables\n");
     printf("mlem        : Wanna see our introduction again 👉👈? (just for fun)\n");
     printf("\n");
 }

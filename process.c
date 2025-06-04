@@ -173,6 +173,35 @@ void shfile(char *path){
     fclose(file);
 }
 
+//set environment variable, example set PATH to /usr/local/bin
+//this setenv function only set env_var during the running time of this TinyShell
+void set_env(char *var, char *value) {
+    char *old_path = getenv(var);
+    if (setenv(var, value, 1) != 0) {
+        perror("Failed to set environment variable");
+    } else {
+        printf("Old value of %s: %s\n", var, old_path);
+        printf("Environment variable %s set to %s\n", var, value);
+    }
+}
+
+//append value to environment variable, example append PATH with /usr/local/bin
+void append_env(char *var, char *value) {
+    char *old_value = getenv(var);
+    if (old_value == NULL) {
+        printf("Environment variable %s does not exist. Creating it.\n", var);
+        setenv(var, value, 1);
+    } else {
+        char new_value[1024];
+        snprintf(new_value, sizeof(new_value), "%s:%s", old_value, value);
+        if (setenv(var, new_value, 1) != 0) {
+            perror("Failed to append to environment variable");
+        } else {
+            printf("Appended %s to %s. \nNew value: %s\n", value, var, new_value);
+        }
+    }
+}
+
 void change_dir(char *dir){
     if (dir == NULL){//move to Home
         dir = getenv("HOME");
@@ -183,6 +212,14 @@ void change_dir(char *dir){
     }
 }
 
+//print all environment variables
+void print_env() {
+    extern char **environ;
+    for (char **env = environ; *env != 0; env++) {
+        char *thisEnv = *env;
+        printf("%s\n", thisEnv);
+    }
+}
 void handle_sigint(int sig) { // (Ctrl+C): kill foreground process
     if (fg_pid > 0) {
         kill(fg_pid, SIGKILL);
