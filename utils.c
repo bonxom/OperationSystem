@@ -27,9 +27,15 @@ void dir(){
         return;
     }
     
+    int cnt = 0;
     while ((dir = readdir(d)) != NULL) {
-        printf("%s\n", dir->d_name); // print all files in current directory
+        if (cnt % 2 == 0){
+            printf("%-50s", dir->d_name); // print all files in current directory
+        }
+        else printf("%s\n", dir->d_name);
+        cnt++;
     }
+    printf("\n");
     
     closedir(d); // close folder
 }
