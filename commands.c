@@ -142,6 +142,9 @@ void handle_printfenv(char **args, int arg_count, int is_background) {
     print_env();
 }
 
+void handle_printPath(char **args, int arg_count, int is_background) {
+    print_path();
+}
 // command mapping table
 CommandEntry command_table[] = {
     {"help", handle_help},
@@ -164,6 +167,7 @@ CommandEntry command_table[] = {
     {"setenv", handle_setenv},
     {"appendenv", handle_appendenv},
     {"printenv", handle_printfenv},
+    {"printPATH", handle_printPath},
     {NULL, NULL} // Kết thúc bảng
 };
 

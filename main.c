@@ -19,8 +19,8 @@ int main() {
         if (getcwd(cwd, sizeof(cwd)) == NULL) {
             strcpy(cwd, "unknown"); // Nếu không lấy được thư mục, dùng "unknown"
         }
-        char prompt[1056]; // Buffer đủ lớn để chứa prompt
-        snprintf(prompt, sizeof(prompt), "\033[1;32mShellHehe\033[0m/\033[1;34m%s\033[0m> ", cwd);
+        char prompt[1059]; // Buffer đủ lớn để chứa prompt
+        snprintf(prompt, sizeof(prompt), "\033[1;32mShellHehe:\033[0m\033[1;34m%s\033[0m> ", cwd);
         char *s = readline(prompt); // Sử dụng prompt động với màu sắc
         if (!s) break; // Thoát nếu gặp EOF (Ctrl+D)
         if (*s) add_history(s); // Lưu lệnh vào lịch sử

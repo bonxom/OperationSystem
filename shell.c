@@ -78,6 +78,7 @@ void help(){
     printf("setenv <var> <value> : Set an environment variable\n");
     printf("appendenv <var> <value> : Append a value to an environment variable\n");
     printf("printenv    : Print all environment variables\n");
+    printf("printPATH   : Print environment variable PATH\n");
     printf("mlem        : Wanna see our introduction again 👉👈? (just for fun)\n");
     printf("\n");
 }

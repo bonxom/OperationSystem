@@ -220,6 +220,15 @@ void print_env() {
         printf("%s\n", thisEnv);
     }
 }
+//print PATH
+void print_path() {
+    char *path = getenv("PATH");
+    if (path != NULL) {
+        printf("PATH=%s\n", path);
+    } else {
+        printf("PATH variable not found.\n");
+    }
+}
 void handle_sigint(int sig) { // (Ctrl+C): kill foreground process
     if (fg_pid > 0) {
         kill(fg_pid, SIGKILL);
