@@ -14,7 +14,7 @@ extern pid_t fg_pid; // tracking foreground process
 extern char fg_command_name[256]; // foreground process name
 
 void addProcess(int pid, const char *name, int status);
-void createChild();
+void createChild(int is_background);
 void list();
 void kil(int type, char *id);
 void stop(int type, char *id);

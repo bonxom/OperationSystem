@@ -46,7 +46,7 @@ void handle_timer(char **args, int arg_count, int is_background) {
 
 void handle_child(char **args, int arg_count, int is_background) {
     strcpy(fg_command_name, "child");
-    createChild();
+    createChild(is_background);
     fg_command_name[0] = '\0';
 }
 

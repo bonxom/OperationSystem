@@ -27,15 +27,25 @@ void addProcess(int pid, const char *name, int status) {
     printf("Process %d (%s) added to background.\n", pid, name); // test
 }
 
-void createChild(){
+void createChild(int is_background){
     pid_t pid = fork();
     if (pid == 0) {
         printf("Child process is running\n");
-        sleep(5);
+        sleep(10000);
         printf("Child process finished\n");
         exit(0);
     } else if (pid > 0) {
-        addProcess(pid, "child", 0);
+        if (is_background) {
+            printf("Started child process in background (PID %d)\n", pid);
+            addProcess(pid, "child", 0);  // Ghi nhận tiến trình chạy nền
+        } else {
+            printf("Started child process in foreground (PID %d)\n", pid);
+            fg_pid = pid;
+            strcpy(fg_command_name, "child");
+            int status = 0;
+            waitpid(pid, &status, WUNTRACED);
+            fg_pid = -1;
+        }
     } else {
         perror("Fork failed");
     }
